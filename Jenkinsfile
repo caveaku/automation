@@ -3,7 +3,8 @@ pipeline {
 
     environment {
         AWS_REGION     = 'us-east-1'
-        TF_WORKING_DIR = 'automation'
+        // Terraform is in the repo root, not in an "automation" directory
+        TF_WORKING_DIR = '.'
     }
 
     options {
