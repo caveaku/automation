@@ -25,7 +25,7 @@ pipeline {
             }
         }
 
-        stage('Terraform Init / Validate / apply') {
+        stage('Terraform Init / Validate / plan') {
             steps {
                 withCredentials([
                     string(credentialsId: 'aws_access_key', variable: 'AWS_ACCESS_KEY_ID'),
@@ -46,8 +46,8 @@ pipeline {
                             echo ">>> Running terraform validate..."
                             terraform validate
 
-                            echo ">>> Running terraform apply..."
-                            terraform apply -out=tfapply
+                            echo ">>> Running terraform plan..."
+                            terraform apply -out=tfplan
                         '''
                     }
                 }
@@ -73,8 +73,8 @@ pipeline {
                             echo ">>> Verifying AWS credentials before apply..."
                             aws sts get-caller-identity || exit 1
 
-                            echo ">>> Running terraform apply using saved plan (tfapply)..."
-                            terraform apply -auto-approve tfapply
+                            echo ">>> Running terraform apply using saved plan (tfplan)..."
+                            terraform apply -auto-approve tfplan
                         '''
                     }
                 }
