@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION = 'us-east-1'
+        AWS_REGION     = 'us-east-1'
         TF_WORKING_DIR = 'infra'
     }
 
@@ -17,32 +17,38 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        stage('Terraform Init') {
+        stage('Terraform Init / Validate / Plan') {
             steps {
-                dir("${TF_WORKING_DIR}") {
-                    sh 'terraform init'
-                }
-            }
-        }
+                withCredentials([
+                    string(credentialsId: 'aws_access_key', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'aws_secret_key', variable: 'AWS_SECRET_ACCESS_KEY')
+                ]) {
+                    dir("${TF_WORKING_DIR}") {
+                        sh '''
+                            export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+                            export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+                            export AWS_DEFAULT_REGION=${AWS_REGION}
 
-        stage('Terraform Validate') {
-            steps {
-                dir("${TF_WORKING_DIR}") {
-                    sh 'terraform validate'
-                }
-            }
-        }
+                            echo ">>> Verifying AWS credentials..."
+                            aws sts get-caller-identity || exit 1
 
-        stage('Terraform Plan') {
-            steps {
-                dir("${TF_WORKING_DIR}") {
-                    sh 'terraform plan -out=tfplan'
+                            echo ">>> Running terraform init..."
+                            terraform init
+
+                            echo ">>> Running terraform validate..."
+                            terraform validate
+
+                            echo ">>> Running terraform plan..."
+                            terraform plan -out=tfplan
+                        '''
+                    }
                 }
             }
         }
@@ -52,11 +58,26 @@ pipeline {
                 branch 'main'
             }
             steps {
-                dir("${TF_WORKING_DIR}") {
-                    script {
-                        // simple manual approval before applying
-                        input message: "Apply Terraform changes to AWS?", ok: "Apply"
-                        sh 'terraform apply -auto-approve tfplan'
+                withCredentials([
+                    string(credentialsId: 'aws_access_key', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'aws_secret_key', variable: 'AWS_SECRET_ACCESS_KEY')
+                ]) {
+                    dir("${TF_WORKING_DIR}") {
+                        script {
+                            input message: "Apply Terraform changes to AWS?", ok: "Apply"
+
+                            sh '''
+                                export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+                                export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+                                export AWS_DEFAULT_REGION=${AWS_REGION}
+
+                                echo ">>> Verifying AWS credentials before apply..."
+                                aws sts get-caller-identity || exit 1
+
+                                echo ">>> Running terraform apply..."
+                                terraform apply -auto-approve tfplan
+                            '''
+                        }
                     }
                 }
             }
