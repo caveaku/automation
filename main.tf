@@ -132,7 +132,7 @@ resource "aws_db_instance" "postgres" {
   allocated_storage = 20
 
   engine         = "postgres"
-  engine_version = "15.5" # adjust if AWS supports a newer minor
+  engine_version = "17.7" # adjust if AWS supports a newer minor
   instance_class = "db.t3.micro"
 
   db_name  = var.db_name
