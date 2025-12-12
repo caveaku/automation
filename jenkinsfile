@@ -1,0 +1,77 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_REGION = 'us-east-1'
+        TF_WORKING_DIR = 'infra'
+    }
+
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+    }
+
+    triggers {
+        // For a Multibranch Pipeline, GitHub webhook is enough; this trigger is optional.
+        pollSCM('@daily')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Terraform Init') {
+            steps {
+                dir("${TF_WORKING_DIR}") {
+                    sh 'terraform init'
+                }
+            }
+        }
+
+        stage('Terraform Validate') {
+            steps {
+                dir("${TF_WORKING_DIR}") {
+                    sh 'terraform validate'
+                }
+            }
+        }
+
+        stage('Terraform Plan') {
+            steps {
+                dir("${TF_WORKING_DIR}") {
+                    sh 'terraform plan -out=tfplan'
+                }
+            }
+        }
+
+        stage('Terraform Apply') {
+            when {
+                branch 'main'
+            }
+            steps {
+                dir("${TF_WORKING_DIR}") {
+                    script {
+                        // simple manual approval before applying
+                        input message: "Apply Terraform changes to AWS?", ok: "Apply"
+                        sh 'terraform apply -auto-approve tfplan'
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline finished."
+        }
+        success {
+            echo "Terraform apply completed successfully."
+        }
+        failure {
+            echo "Terraform pipeline failed!"
+        }
+    }
+}
