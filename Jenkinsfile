@@ -25,7 +25,10 @@ pipeline {
             }
         }
 
-        stage('Terraform Init / Validate / Plan / apply') {
+        stage('Terraform Init / Validate / Plan / Apply') {
+            when {
+                branch 'main'     // only run on main
+            }
             steps {
                 withCredentials([
                     string(credentialsId: 'aws_access_key', variable: 'AWS_ACCESS_KEY_ID'),
@@ -33,6 +36,8 @@ pipeline {
                 ]) {
                     dir("${TF_WORKING_DIR}") {
                         sh '''
+                            set -e
+
                             export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
                             export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
                             export AWS_DEFAULT_REGION=${AWS_REGION}
@@ -48,37 +53,10 @@ pipeline {
 
                             echo ">>> Running terraform plan..."
                             terraform plan -out=tfplan
+
+                            echo ">>> Running terraform apply..."
+                            terraform apply -auto-approve tfplan
                         '''
-                    }
-                }
-            }
-        }
-
-        stage('Terraform Apply') {
-            when {
-                branch 'main'
-            }
-            steps {
-                withCredentials([
-                    string(credentialsId: 'aws_access_key', variable: 'AWS_ACCESS_KEY_ID'),
-                    string(credentialsId: 'aws_secret_key', variable: 'AWS_SECRET_ACCESS_KEY')
-                ]) {
-                    dir("${TF_WORKING_DIR}") {
-                        script {
-                            input message: "Apply Terraform changes to AWS?", ok: "Apply"
-
-                            sh '''
-                                export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-                                export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-                                export AWS_DEFAULT_REGION=${AWS_REGION}
-
-                                echo ">>> Verifying AWS credentials before apply..."
-                                aws sts get-caller-identity || exit 1
-
-                                echo ">>> Running terraform apply..."
-                                terraform apply -auto-approve tfplan
-                            '''
-                        }
                     }
                 }
             }
