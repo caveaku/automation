@@ -25,10 +25,10 @@ pipeline {
             }
         }
 
-        stage('Terraform Init / Validate / plan') {
+        stage('Terraform Init / Validate / Plan') {
             steps {
                 withCredentials([
-                    string(credentialsId: 'aws_access_key', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'aws_access_key',  variable: 'AWS_ACCESS_KEY_ID'),
                     string(credentialsId: 'aws_secret_key', variable: 'AWS_SECRET_ACCESS_KEY')
                 ]) {
                     dir("${TF_WORKING_DIR}") {
@@ -47,7 +47,7 @@ pipeline {
                             terraform validate
 
                             echo ">>> Running terraform plan..."
-                            terraform apply -out=tfplan
+                            terraform plan -out=tfplan
                         '''
                     }
                 }
@@ -55,13 +55,9 @@ pipeline {
         }
 
         stage('Terraform Apply') {
-            // Only actually deploy from the main branch
-            when {
-                branch 'main'
-            }
             steps {
                 withCredentials([
-                    string(credentialsId: 'aws_access_key', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'aws_access_key',  variable: 'AWS_ACCESS_KEY_ID'),
                     string(credentialsId: 'aws_secret_key', variable: 'AWS_SECRET_ACCESS_KEY')
                 ]) {
                     dir("${TF_WORKING_DIR}") {
