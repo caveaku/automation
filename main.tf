@@ -139,7 +139,7 @@ resource "aws_db_instance" "postgres" {
   username = var.db_username
   password = var.db_password
 
-  db_subnet_group_name   = aws_db_subnet_group.rds_subnets.name
+  db_subnet_group_name   = aws_db_subnet_group.rds_subnets1.name
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
 
   publicly_accessible = false
