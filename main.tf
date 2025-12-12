@@ -117,7 +117,7 @@ resource "aws_security_group" "rds_sg" {
 }
 
 # DB subnet group for RDS
-resource "aws_db_subnet_group" "rds_subnets" {
+resource "aws_db_subnet_group" "rds_subnets1" {
   name       = "tf-rds-subnet-group"
   subnet_ids = [aws_subnet.subnet_1.id, aws_subnet.subnet_2.id]
 
