@@ -74,7 +74,7 @@ pipeline {
                             aws sts get-caller-identity || exit 1
 
                             echo ">>> Running terraform apply using saved plan (tfplan)..."
-                            terraform apply -auto-approve tfplan
+                            terraform apply -auto-approve tfapply
                         '''
                     }
                 }
