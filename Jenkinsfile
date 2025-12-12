@@ -25,7 +25,7 @@ pipeline {
             }
         }
 
-        stage('Terraform Init / Validate / Plan') {
+        stage('Terraform Init / Validate / Plan / apply') {
             steps {
                 withCredentials([
                     string(credentialsId: 'aws_access_key', variable: 'AWS_ACCESS_KEY_ID'),
