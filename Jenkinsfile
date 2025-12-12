@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         AWS_REGION     = 'us-east-1'
-        TF_WORKING_DIR = 'infra'
+        TF_WORKING_DIR = 'automation'
     }
 
     options {
